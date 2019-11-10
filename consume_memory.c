@@ -1,86 +1,118 @@
-#include <stdlib.h>
 #include <stdio.h>
-#include <stdbool.h>
+#include <stdlib.h>
+#include <time.h>
 
-#include "llist.h"
 #include "tmalloc.h"
 
-// bias for allocate
-typedef enum operation {
-    ALLOCATE,
-    MORE_ALLOCATE,
-    ALLOCATE_MORE,
-    FREE,
-    NUM_OPS
-} operation;
+// Node of a binary tree.
 
-#define ALLOCATE_ITEMS 3
-int allocate_size[] = {
-    sizeof(struct llhead) + 4,  // INT
-    sizeof(struct llhead) + 8,  // INT
-    sizeof(struct llhead) + 16  // INT
-};
+typedef struct node {
+	int data;
+	struct node* l_child;
+	struct node* r_child;
+} node;
 
-int main(int argc, char* argv[]) {
 
-    #ifdef TINKER
-        init_tmalloc("first_fit_block_algo");
-    #endif
+node* newNode(int data);
+void deleteNode(node *n);
+node* traverse(node* root);
 
-    // seed random number generator
-    int seed = atoi(argv[1]);
-    srand(seed);
+int count = 0;
 
-    // declare loop variables
-    int bytes, count = 0;
-    operation option;
-    struct llhead* temp;
+int main(int argc, char* argv[])
+{
+	// Which algorithm to use.
+	#ifdef TINKER
+		init_tmalloc("first_fit_block_algo");
+	#endif
 
-    // initialize list structure to store allocated memory
-    LL_HEAD(llist);
-    struct llhead* traverse = &llist;
+	// Seed random generator.
+	srand(time(0));
 
-    // keep allocating memory until it fails
-    // i.e. malloc returns NULL
-    while (true) {
+	// Initialize root node.
+	node *ROOT_NODE = newNode(0);
 
-        // randomly choose to free the memory or not
-        // Note: memory leak is in accordance with purpose of the program
-        option = rand() % NUM_OPS;
-        if (option == FREE) {
-            // do not free list head
-            if (traverse == &llist) continue;
+	// Loop till malloc fails.
+	node *n = ROOT_NODE;
+	while(1) {
+		int r = rand() % 3;
+		
+		switch(r)
+			{
+				case 0:
+					n->l_child = newNode(0);
+					count++;
+				break;
+			
+				case 1:
+					n->r_child = newNode(0);
+					count++;
+				break;
+				
+				case 2:
+					n->l_child = newNode(0);
+					n->r_child = newNode(0);
+					count+=2;
+				break;	
 
-            temp = traverse;
-            traverse = traverse->prev;
-            LL_DEL(temp);
+				case 3:
+					deleteNode(n);
+				break;
+			}
+		n = traverse(ROOT_NODE);
+	}
+}
 
-            #ifdef TINKER
-                tfree(temp);
-            #else
-                free(temp);
-            #endif
 
-            count++;
-        } else {
-            
-            // randomly choose bytes to allocate
-            bytes = allocate_size[rand()%ALLOCATE_ITEMS];
 
-            #ifdef TINKER
-                temp = tmalloc(bytes);
-            #else
-                temp = malloc(bytes);
-            #endif
+node* newNode(int data)
+{
+#ifdef TINKER
+	node *n = (node*) tmalloc(sizeof(node));
+#else 
+	node *n = (node*) malloc(sizeof(node));
+#endif
+	if (n == NULL)
+	{
+		printf("Number of successful malloc calls: %d", count);
+		exit(0);
+	}	
+	n->data = data;
+	n->l_child = NULL;
+	n->r_child = NULL;
 
-            if (temp == NULL) break;  // break when malloc fails
-            LL_ADD(&llist, temp);
-            traverse = temp;
-            count++;
-        }
-    }
+	return n;
+}
 
-    printf("successful calls: %d\n", count);
-    return 0;
+void deleteNode(node *n)
+{
+#ifdef TINKER
+	tfree(n);
+#else
+	free(n);
+#endif
+}
+
+node* traverse(node* root)
+{
+	node *n = root;
+	while(n->l_child || n->r_child)
+	{
+		// Randomly select a child
+		if (rand() % 2)
+		{
+			if(n->r_child)
+				n = n->r_child;
+			else
+				n = n->l_child;
+		} else 
+		{
+			if(n->l_child)
+				n = n->l_child;
+			else
+				n = n->r_child;
+		}
+	}
+	return n;
 }
 
