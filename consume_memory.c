@@ -13,6 +13,13 @@ typedef enum operations {
     NUM_OPS
 } operations;
 
+#define ALLOCATION_ITEMS 3
+int allocation_size[] = { \
+    sizeof(struct node) + 4, \
+    sizeof(struct node) + 8, \
+    sizeof(struct node) + 16 \
+};
+
 int main(int argc, char* argv[])
 {
     // Which algorithm to use.
@@ -27,14 +34,21 @@ int main(int argc, char* argv[])
     int count = 0;
 
     // Initialize root node.
-    struct node *ROOT_NODE = newNode(0);
-
+    struct node* ROOT_NODE;
+    ROOT_NODE->data = 0; 
+    ROOT_NODE->l_child = NULL;
+    ROOT_NODE->r_child = NULL;
     // Loop till malloc fails.
     struct node *n = ROOT_NODE;
     while(1) {
-
         int r = rand() % NUM_OPS;
-        struct node* temp_node = newNode(0);
+        int size = allocation_size[rand() % ALLOCATION_ITEMS];
+
+        #ifdef TINKER 
+        struct node* temp_node =  tmalloc(size);
+        #else 
+        struct node* temp_node =  malloc(size);
+        #endif 
 
         // Exit if malloc failed to allocate memory.
         if (temp_node == NULL) break;
@@ -51,10 +65,14 @@ int main(int argc, char* argv[])
                     break;
 
                 case DELETE_SELF:
-                    deleteNode(n);
+                    #ifdef TINKER 
+                    tfree(n);
+                    #else
+                    free(n);
+                    #endif
                     break;
             }
-        n = traverse(ROOT_NODE);
+        n = traverse_tree(ROOT_NODE);
     }
     printf("Successful malloc calls: %d", count);
     return 0;
