@@ -10,6 +10,7 @@
 typedef enum operation {
     GROW_LEFT,
     GROW_RIGHT,
+    GROW_BOTH,
     DELETE_SELF,
     NUM_OPS
 } operation;
@@ -31,26 +32,40 @@ int main(int argc, char* argv[])
     node *n = ROOT_NODE;
     while(1) {
         operation opt = rand() % NUM_OPS;
-        node* temp_node = newNode(0);
+        node* temp_node;
         if (temp_node == NULL) break;
 
         switch(opt)
         {
-            case 0:
+            case GROW_LEFT:
+                temp_node = newNode(0);
                 n->l_child = temp_node;
+                temp_node->parent = n;
+                count++;
                 break;
 
-            case 1:
+            case GROW_RIGHT:
+                temp_node = newNode(0);
+                temp_node->parent = n;
                 n->r_child = temp_node;
+                count++;
                 break;
 
-            case 2:
+            case GROW_BOTH:
+                temp_node = newNode(0);
+                n->l_child = temp_node;
+                temp_node->parent = n;
+                temp_node = newNode(0);
+                n->r_child = newNode(0);
+                temp_node->parent = n;
+                count += 2;  
+
+            case DELETE_SELF:
                 deleteNode(n);
                 break;
         }
         n = traverse(ROOT_NODE);
-        count++;
     }
-    printf("Successful malloc calls: %d", count);
+    printf("Successfully called memory allocation function %d times.", count);
 }
 

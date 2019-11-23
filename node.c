@@ -21,8 +21,10 @@ node* newNode(int data)
     return n;
 }
 
+
 void deleteNode(node *n)
 {
+    n->parent = NULL;
 #ifdef TINKER
     tfree(n);
 #else
